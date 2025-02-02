@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
 
+// Definição da interface para representar um Pokémon
 interface Pokemon {
   id: number;
   name: string;
@@ -10,9 +11,13 @@ interface Pokemon {
 }
 
 export class PokemonDetails extends LitElement {
+  // Propriedade que recebe o ID do Pokémon através da URL
   @property({ type: Number }) pokemonId: number = 0;
+
+  // Estado interno para armazenar os detalhes do Pokémon
   @state() private pokemon: Pokemon | null = null;
 
+  // Definição dos estilos do componente
   static styles = css`
     :host {
       display: flex;
@@ -61,27 +66,38 @@ export class PokemonDetails extends LitElement {
     }
   `;
 
+  // Método chamado automaticamente quando o componente é inicializado
   async firstUpdated() {
+    // Obtém o ID do Pokémon a partir da URL
     this.pokemonId = parseInt(location.pathname.split('/').pop() || '0', 10);
+    
+   
     await this.fetchPokemonDetails();
   }
 
+  // Método assíncrono para procurar os detalhes do Pokémon na PokéAPI
   async fetchPokemonDetails() {
     try {
+      // Faz a requisição para obter os dados do Pokémon pelo ID
       const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${this.pokemonId}`);
       const details = await response.json();
-      
+  
+      // Obtém as habilidades do Pokémon e procura a descrição de cada uma
       const abilities = await Promise.all(details.abilities.map(async (abilityInfo: any) => {
         const abilityResponse = await fetch(abilityInfo.ability.url);
         const abilityDetails = await abilityResponse.json();
-        const englishEntry = abilityDetails.flavor_text_entries.find((entry: any) => entry.language.name === 'en');
+        
+        // Obtém a primeira descrição disponível da habilidade
+        const entry = abilityDetails.flavor_text_entries[0];
+  
         return {
           name: abilityInfo.ability.name,
-          flavorText: englishEntry ? englishEntry.flavor_text : 'No description available',
-          version: englishEntry ? englishEntry.version_group.name : 'Unknown'
+          flavorText: entry ? entry.flavor_text : 'Descrição não disponível',
+          version: entry ? entry.version_group.name : 'Desconhecido'
         };
       }));
-      
+  
+      // Atualiza o estado do Pokémon com os dados recebidos
       this.pokemon = {
         id: details.id,
         name: details.name,
@@ -90,10 +106,11 @@ export class PokemonDetails extends LitElement {
         abilities
       };
     } catch (error) {
-      console.error('Error fetching Pokémon details:', error);
+      console.error('Erro ao buscar detalhes do Pokémon:', error);
     }
   }
 
+  // Método que renderiza o HTML do componente
   render() {
     return html`
       ${this.pokemon
@@ -103,26 +120,27 @@ export class PokemonDetails extends LitElement {
             <div class="pokemon-info">
               <h2>${this.pokemon.name} (#${this.pokemon.id})</h2>
               <div>
-                <strong>Types:</strong>
+                <strong>Tipos:</strong>
                 <ul>
-                  ${this.pokemon.types.map(type => html`<li>${type.name}:</li> `)}
+                  ${this.pokemon.types.map(type => html`<li>${type.name}</li> `)}
                 </ul>
               </div>
               <div>
-                <strong>Abilities:</strong>
+                <strong>Habilidades:</strong>
                 <ul>
-                  ${this.pokemon.abilities.map(ability => html`<li>${ability.name}: ${ability.flavorText} (Version: ${ability.version})</li>`)}
+                  ${this.pokemon.abilities.map(ability => html`<li>${ability.name}: ${ability.flavorText} (Versão: ${ability.version})</li>`)}
                 </ul>
               </div>
             </div>
           </div>
           <div class="back-container">
-            <a class="back-link" href="/" @click=${this.goBack}>← Back to list</a>
+            <a class="back-link" href="/" @click=${this.goBack}>← Voltar à lista</a>
           </div>`
-        : html`<p>Loading...</p>`}
+        : html`<p>A carregar...</p>`}
     `;
   }
 
+  // Método que trata o clique no botão de voltar
   goBack(event: Event) {
     event.preventDefault();
     window.history.pushState({}, '', '/');
@@ -130,4 +148,5 @@ export class PokemonDetails extends LitElement {
   }
 }
 
+// Regista o componente para ser utilizado no HTML
 customElements.define('pokemon-details', PokemonDetails);

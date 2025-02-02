@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { state, property } from 'lit/decorators.js';
 
+// Definição da interface para representar um Pokémon
 interface Pokemon {
   id: number;
   name: string;
@@ -9,6 +10,7 @@ interface Pokemon {
 }
 
 export class PokemonOverview extends LitElement {
+  // Propriedade para definir o título da secção
   @property({ type: String }) headline = 'These are our products';
   @state() private pokemonList: Pokemon[] = [];
   @state() private allPokemonList: Pokemon[] = [];
@@ -157,6 +159,7 @@ export class PokemonOverview extends LitElement {
     await this.fetchPokemonList('https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0');
   }
 
+// Obtém a lista de tipos disponíveis a partir da API
   async fetchAvailableTypes() {
     try {
       const response = await fetch('https://pokeapi.co/api/v2/type/');
@@ -169,6 +172,7 @@ export class PokemonOverview extends LitElement {
     }
   }
 
+// Obtém a lista completa de Pokémon a partir da API
   async fetchPokemonList(url: string) {
     try {
       this.loading = true;
@@ -200,6 +204,7 @@ export class PokemonOverview extends LitElement {
     }
   }
 
+  // Atualiza os filtros baseados no tipo de Pokémon selecionado
   updateFilter(event: Event) {
     const target = event.target as HTMLInputElement;
     if (target.checked) {
@@ -215,7 +220,8 @@ export class PokemonOverview extends LitElement {
     this.applyFilter();
   }
 
-  applyFilter() {
+  // Aplica os filtros e a pesquisa para atualizar a lista de Pokémon visíveis
+    applyFilter() {
     //this.pokemonList = this.selectedTypes.size > 0
       //? this.allPokemonList.filter(pokemon => pokemon.types.some(type => this.selectedTypes.has(type)))
       //: this.allPokemonList;
@@ -265,12 +271,14 @@ export class PokemonOverview extends LitElement {
     `;
   }
 
+  // Navega para a página de detalhes do Pokémon sem recarregar a página
   navigateToPokemon(event: Event) {
   event.preventDefault();
   const target = event.currentTarget as HTMLAnchorElement;
   window.history.pushState({}, '', target.href);
   window.dispatchEvent(new Event('popstate')); // Atualiza a rota
 }
+  // Obtém a cor associada a cada tipo de Pokémon
   getTypeColor(type: string): string {
     const colors: Record<string, string> = {
       bug: 'olive', dark: 'black', dragon: 'darkblue', electric: 'yellow', fairy: 'lightpink',
