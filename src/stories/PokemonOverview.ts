@@ -156,6 +156,7 @@ export class PokemonOverview extends LitElement {
 
   async firstUpdated() {
     await this.fetchAvailableTypes();
+    // TO DO - separar as páginas com 100 pokemons cada para ser mais fácil e menos pesado de carregar
     await this.fetchPokemonList('https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0');
   }
 
