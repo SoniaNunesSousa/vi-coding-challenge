@@ -14,6 +14,8 @@ export class PokemonOverview extends LitElement {
   @state() private allPokemonList: Pokemon[] = [];
   @state() private selectedTypes: Set<string> = new Set();
   @state() private availableTypes: string[] = [];
+  @state() private searchQuery: string = '';
+  @state() private loading: boolean = false;
 
   static styles = css`
     :host {
@@ -134,6 +136,16 @@ export class PokemonOverview extends LitElement {
         background-color: black;
         margin: 5px 0;
     }
+    .search-bar {
+      margin-bottom: 10px;
+    }
+      .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
   `;
 
   constructor() {
@@ -159,6 +171,7 @@ export class PokemonOverview extends LitElement {
 
   async fetchPokemonList(url: string) {
     try {
+      this.loading = true;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Erro ao carregar Pokémon');
@@ -182,6 +195,8 @@ export class PokemonOverview extends LitElement {
       this.applyFilter();
     } catch (error) {
       console.error(error);
+    } finally {
+      this.loading = false;
     }
   }
 
@@ -195,15 +210,20 @@ export class PokemonOverview extends LitElement {
     this.applyFilter();
   }
 
+  updateSearch(event: Event) {
+    this.searchQuery = (event.target as HTMLInputElement).value.toLowerCase();
+    this.applyFilter();
+  }
+
   applyFilter() {
     //this.pokemonList = this.selectedTypes.size > 0
       //? this.allPokemonList.filter(pokemon => pokemon.types.some(type => this.selectedTypes.has(type)))
       //: this.allPokemonList;
-    this.pokemonList = this.selectedTypes.size > 0
-    ? this.allPokemonList.filter(pokemon =>
-        [...this.selectedTypes].every(selectedType => pokemon.types.includes(selectedType))
-    )
-    : this.allPokemonList;
+      this.pokemonList = this.allPokemonList
+      .filter(pokemon =>
+        (this.selectedTypes.size === 0 || [...this.selectedTypes].every(type => pokemon.types.includes(type))) &&
+        (this.searchQuery === '' || pokemon.name.toLowerCase().includes(this.searchQuery))
+      );
   }
 
   render() {
@@ -211,6 +231,8 @@ export class PokemonOverview extends LitElement {
       <h2>${this.headline}</h2>
       <div class="container">
         <div class="filter">
+        <h3>Search Pokémon</h3>
+         <input type="text" class="search-bar" placeholder="Search" @input=${this.updateSearch}>
           <h3>Filter</h3>
           ${this.availableTypes.map(type => html`
             <label>
@@ -222,8 +244,9 @@ export class PokemonOverview extends LitElement {
         </div>
 
         <div class="pokemon-container">
-          ${this.pokemonList.map(
-            pokemon => html`
+          ${this.loading
+            ? html`<div class="loading-spinner">Loading...</div>`
+            : this.pokemonList.map(pokemon => html`
               <a href="/pokemon/${pokemon.id}" @click=${this.navigateToPokemon} class="pokemon-card">
                 <span class="pokemon-id">#${pokemon.id}</span>
                 <img src="${pokemon.image}" alt="${pokemon.name}">
@@ -236,8 +259,7 @@ export class PokemonOverview extends LitElement {
                   </span>
                 </div>
               </a>
-            `
-          )}
+            `)}
         </div>
       </div>
     `;
